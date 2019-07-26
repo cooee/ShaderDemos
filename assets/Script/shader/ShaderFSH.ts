@@ -13,27 +13,77 @@ void main () {
 }
 `;
 const ShaderFSH = [
-    {
-        name: "GrayScaling",//灰度图
-        vert: MVP,
-        defines: [],
-        frag: `
-uniform sampler2D texture;
-uniform vec4 color;
-varying vec2 uv0;
+  {
+    name: "GrayScaling",//灰度图
+    vert: MVP,
+    defines: [],
+    frag: `
+    #ifdef GL_ES
+    precision mediump float;
+    #endif
+    uniform sampler2D texture;
+    uniform vec4 color;
+    uniform float iTime;
+    varying vec2 uv0;
+
+    uniform vec3 resolution;
+
+
+
+		void mainImage( out vec4 fragColor, in vec2 fragCoord )
+		{
+			vec2 p = (2.0*fragCoord-resolution.xy)/min(resolution.y,resolution.x);
+			
+		    // background color
+		    vec3 bcol = vec3(1.0,0.8,0.7-0.07*p.y)*(1.0-0.25*length(p));
+		
+		    // animate
+		    float tt = mod(iTime,1.5)/1.5;
+		    float ss = pow(tt,.2)*0.5 + 0.5;
+		    ss = 1.0 + ss*0.5*sin(tt*6.2831*3.0 + p.y*0.5)*exp(-tt*4.0);
+		    p *= vec2(0.5,1.5) + ss*vec2(0.5,-0.5);
+		
+		    // shape
+			#if 0
+			    p *= 0.8;
+			    p.y = -0.1 - p.y*1.2 + abs(p.x)*(1.0-abs(p.x));
+			    float r = length(p);
+				float d = 0.5;
+			#else
+				p.y -= 0.25;
+			    float a = atan(p.x,p.y)/3.1415926;
+			    float r = length(p);
+			    float h = abs(a);
+			    float d = (13.0*h - 22.0*h*h + 10.0*h*h*h)/(6.0-5.0*h);
+			#endif
+		    
+			// color
+			float s = 0.75 + 0.75*p.x;
+			s *= 1.0-0.4*r;
+			s = 0.3 + 0.7*s;
+			s *= 0.5+0.5*pow( 1.0-clamp(r/d, 0.0, 1.0 ), 0.1 );
+			
+			vec3 hcol = vec3(1.0,0.5*r,0.3)*s;
+			
+			
+			//bcol = vec3(1.0,1,1)*0.0;
+			
+		    vec3 col = mix( bcol, hcol, smoothstep( -0.01, 0.01, d-r) );
+		
+		    fragColor = vec4(col,1.0);
+		}
+
 void main () {
-    vec4 c = color * texture2D(texture, uv0);
-    float gray = dot(c.rgb, vec3(0.299 * 0.5, 0.587 * 0.5, 0.114 * 0.5));
-    gl_FragColor = vec4(gray, gray, gray, c.a * 0.5);
+    mainImage(gl_FragColor,vec2(uv0.x,1.0- uv0.y) * resolution.xy);
 }
 `
-    },
+  },
 
-    {
-        name: "WaterWave",//水波
-        vert: MVP,
-        defines: [],
-        frag: `
+  {
+    name: "WaterWave",//水波
+    vert: MVP,
+    defines: [],
+    frag: `
 #define F cos(x-y)*cos(y),sin(x+y)*sin(y)
 
 uniform sampler2D texture;
@@ -62,12 +112,12 @@ void main()
     mainImage(gl_FragColor, gl_FragCoord.xy);
 }
 `
-    },
-    {
-        name: "StartLighting",//封面的闪电
-        vert: MVP,
-        defines: [],
-        frag: `
+  },
+  {
+    name: "StartLighting",//封面的闪电
+    vert: MVP,
+    defines: [],
+    frag: `
 uniform float iTime;
 uniform vec3 resolution;
 varying vec2 uv0;
@@ -217,11 +267,11 @@ void main()
 
 
 cc.game.once(cc.game.EVENT_ENGINE_INITED, function () {
-    ShaderFSH.forEach((val) => {
-        // shader模板定义 名字，顶点着色器，片段着色器，宏定义列表，引擎初始化完成即定义
-        // @ts-ignore
-        cc.renderer._forward._programLib.define(val.name, val.vert, val.frag, val.defines || []);
-    })
+  ShaderFSH.forEach((val) => {
+    // shader模板定义 名字，顶点着色器，片段着色器，宏定义列表，引擎初始化完成即定义
+    // @ts-ignore
+    cc.renderer._forward._programLib.define(val.name, val.vert, val.frag, val.defines || []);
+  })
 });
 
 export default ShaderFSH;

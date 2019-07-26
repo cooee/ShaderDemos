@@ -9,19 +9,20 @@ export default class MaterialSingleton extends Material {
         super(false);
     }
 
-    public static getInstance(shaderName:string): MaterialSingleton {
+    public static getInstance(shaderName:string,params?: any | void): MaterialSingleton {
         if (!this.instance) {
             this.instance = new MaterialSingleton();
         }
-        this.instance.initWithName(shaderName)
+        this.instance.initWithName(shaderName,params)
         return this.instance;
     }
 
-    private initWithName(shaderName: string) {
+    private initWithName(shaderName: string,params?: any | void) {
         let renderer = renderEngine.renderer;
         let gfx = renderEngine.gfx;
-
+        console.log(shaderName,"shaderName")
         let pass = new renderer.Pass(shaderName);
+        console.log(pass)
         pass.setDepth(false, false);
         pass.setCullMode(gfx.CULL_NONE);
         pass.setBlend(
@@ -31,18 +32,37 @@ export default class MaterialSingleton extends Material {
             gfx.BLEND_SRC_ALPHA, gfx.BLEND_ONE_MINUS_SRC_ALPHA
         );
 
-        let mainTech = new renderer.Technique(
-            ['transparent'],
-            [
+        // let mainTech = new renderer.Technique(
+        //     ['transparent'],
+        //     [
+        //         { name: 'texture', type: renderer.PARAM_TEXTURE_2D },
+        //         { name: 'pos', type: renderer.PARAM_FLOAT3 },
+        //         { name: 'size', type: renderer.PARAM_FLOAT2 },
+        //         { name: 'iTime', type: renderer.PARAM_FLOAT },
+        //         { name: 'num', type: renderer.PARAM_FLOAT },
+        //         { name: 'resolution', type: renderer.PARAM_FLOAT3 },
+        //     ],
+        //     [pass]
+        // );
+
+        let techParams = [
                 { name: 'texture', type: renderer.PARAM_TEXTURE_2D },
                 { name: 'pos', type: renderer.PARAM_FLOAT3 },
                 { name: 'size', type: renderer.PARAM_FLOAT2 },
-                { name: 'iTime', type: renderer.PARAM_FLOAT },
+                { name: 'time', type: renderer.PARAM_FLOAT },
                 { name: 'num', type: renderer.PARAM_FLOAT },
                 { name: 'resolution', type: renderer.PARAM_FLOAT3 },
-            ],
-            [pass]
-        );
+		];
+
+		if (params) techParams = techParams.concat(params);
+        console.log(techParams,"techParams")
+
+		let mainTech = new renderer.Technique(
+			['transparent'],
+			techParams,
+			[pass]
+		);
+
 
         // @ts-ignore
         this._texture = null;
@@ -64,7 +84,7 @@ export default class MaterialSingleton extends Material {
             {
                 'pos': this._pos,
                 'size': this._size,
-                'iTime': this._time,
+                'time': this._time,
                 'num': this._num,
                 'resolution': this._resolution
             },
@@ -105,7 +125,7 @@ export default class MaterialSingleton extends Material {
     setTime(time) {
         // @ts-ignore
         this._time = time;
-        this._effect.setProperty('iTime', this._time);
+        this._effect.setProperty('time', this._time);
     }
 
     setNum(num) {
@@ -118,6 +138,7 @@ export default class MaterialSingleton extends Material {
         this._resolution.x = w;
         this._resolution.y = h;
         this._effect.setProperty('resolution', this._resolution);
+        console.log("xxxxxxxxxxx")
     }
 
 

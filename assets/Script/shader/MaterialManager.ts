@@ -7,6 +7,8 @@
 // import ShaderLab from "./ShaderLab";
 import ShaderFSH from "./ShaderFSH";
 import MaterialSingleton from "./MaterialSingleton";
+import ShaderLib from './ShaderLib';
+import CustomMaterial from "./CustomMaterial";
 /**
  * 定义材质类型
  */
@@ -19,7 +21,8 @@ export enum ShaderType {
     GrayScaling,
     WaterWave,
     StartLighting,
-    Blackhole
+    Blackhole,
+    Water,
 }
 
 /**
@@ -32,7 +35,8 @@ export let ShaderEffects = cc.Enum({
     灰度图: 0,
     水波: 1,
     闪电: 2,
-    黑洞照片:3
+    黑洞照片:3,
+    水:4
 })
 
 export default class MaterialManager {
@@ -52,9 +56,22 @@ export default class MaterialManager {
         if (shader > ShaderType.Gray) {
             let name = ShaderType[shader];
             let lab = ShaderFSH[shader as number];
+            console.log(lab,"name")
             if (!lab) {
                 console.warn('Shader not defined', name);
-                return;
+                let shader = ShaderLib.getInstance().getShader(name)
+                console.log(shader)
+
+                cc.dynamicAtlasManager.enabled = false;
+                let material = MaterialSingleton.getInstance(name,shader.params);
+                let texture = sprite.spriteFrame.getTexture();
+                material.setTexture(texture);
+                material.updateHash();
+                let sp = sprite as any;
+                sp._material = material;
+                sp._renderData._material = material;
+                sp._state = shader;
+                return material;
             }
             cc.dynamicAtlasManager.enabled = false;
             let material = MaterialSingleton.getInstance(name);

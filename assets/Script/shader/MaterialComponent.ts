@@ -9,7 +9,7 @@ import MaterialManager, { ShaderType, ShaderEffects } from "./MaterialManager";
 
 const { ccclass, property, requireComponent, executeInEditMode } = cc._decorator;
 
-const NeedUpdate = [ShaderType.WaterWave,ShaderType.StartLighting];
+const NeedUpdate = [ShaderType.WaterWave,ShaderType.StartLighting,ShaderType.GrayScaling,ShaderType.Water];
 
 @ccclass
 @executeInEditMode
@@ -26,6 +26,7 @@ export default class ShaderComponent extends cc.Component {
     get shader() { return this._shader; }
     set shader(type) {
         this._shader = type;
+        this._time = 0;
         this._setMaterial();
     }
 
@@ -48,13 +49,21 @@ export default class ShaderComponent extends cc.Component {
     private _setMaterial() {
         let shader = this.shader;
         let sprite = this.getComponent(cc.Sprite);
+        // console
         let material = MaterialManager.getMaterial(sprite, shader);
         this._material = material;
         if (!material) return;
+
+
+        material.setResolution(this.node.width, this.node.height);
+
         switch (shader) {
             case ShaderType.WaterWave:
             case ShaderType.StartLighting:
             case ShaderType.Blackhole:
+                material.setResolution(this.node.width, this.node.height);
+                break;
+            case ShaderType.GrayScaling:
                 material.setResolution(this.node.width, this.node.height);
                 break;
             default:
@@ -68,7 +77,8 @@ export default class ShaderComponent extends cc.Component {
      */
     private _updateShaderTime(dt) {
         if (NeedUpdate.indexOf(this._shader) >= 0) {
-            this._time = (Date.now() - this._startIndex) / 1000;
+
+            this._time = this._time + dt;
             this._material.setTime(this._time);
         }
     }

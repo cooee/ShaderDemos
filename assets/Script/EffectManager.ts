@@ -27,7 +27,7 @@ export default class EffectManager extends cc.Component {
     resolution={ x:0.0, y:0.0};
     // 初始化
     onLoad() {
-        cc.director.setDisplayStats(true);
+        // cc.director.setDisplayStats(true);
         this.resolution.x = (this.node.getContentSize().width );
         this.resolution.y = (this.node.getContentSize().height);
         let self = this;
